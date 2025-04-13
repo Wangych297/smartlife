@@ -39,12 +39,18 @@
     "id": 7,
     "username": "Wangych6",
     "password": "123456",
-    "points": 105
+    "points": 115
   },
   {
     "id": 8,
     "username": "Wangych7",
     "password": "123456",
     "points": 50
+  },
+  {
+    "id": 9,
+    "username": "Wangych8",
+    "password": "123456",
+    "points": 75
   }
 ]

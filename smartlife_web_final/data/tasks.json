@@ -62,15 +62,15 @@
     "createdAt": "2025-04-12T16:10:09.118Z"
   },
   {
-    "id": "1744479185244",
+    "id": "1744548635765",
     "userId": 7,
     "title": "参加半马",
-    "description": "a",
+    "description": "跑步终极目标",
     "priority": "medium",
-    "category": "life",
-    "dueDate": null,
+    "category": "exercise",
+    "dueDate": "2026-04-16T20:50",
     "reminder": false,
-    "completed": false,
-    "createdAt": "2025-04-12T17:33:05.244Z"
+    "completed": true,
+    "createdAt": "2025-04-13T12:50:35.765Z"
   }
 ]
