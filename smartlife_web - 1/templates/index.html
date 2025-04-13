@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartLife - 智能健康与任务管理</title>
+    <!-- 引入一个简单的 CSS 文件 (可选) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>SmartLife 系统</h1>
+
+    <!-- 显示 Flash 消息 -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class=flashes>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <div class="container">
+        <!-- 添加健康数据表单 -->
+        <div class="form-section">
+            <h2>添加健康数据</h2>
+            <form action="{{ url_for('add_health') }}" method="post">
+                <label for="health_date">日期:</label>
+                <input type="date" id="health_date" name="health_date" required>
+
+                <label for="health_type">类型:</label>
+                <input type="text" id="health_type" name="health_type" placeholder="例如: 步数, 睡眠小时" required>
+
+                <label for="health_value">值:</label>
+                <input type="text" id="health_value" name="health_value" placeholder="例如: 10000, 7.5" required>
+
+                <button type="submit">添加数据</button>
+            </form>
+        </div>
+
+        <!-- 添加任务表单 -->
+        <div class="form-section">
+            <h2>添加任务</h2>
+            <form action="{{ url_for('add_task') }}" method="post">
+                <label for="task_description">任务描述:</label>
+                <input type="text" id="task_description" name="task_description" required>
+
+                <label for="task_priority">优先级:</label>
+                <select id="task_priority" name="task_priority">
+                    <option value="高">高</option>
+                    <option value="中" selected>中</option>
+                    <option value="低">低</option>
+                </select>
+
+                <label for="task_due_date">截止日期:</label>
+                <input type="date" id="task_due_date" name="task_due_date">
+
+                <button type="submit">添加任务</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container data-section">
+        <!-- 显示健康数据 -->
+        <div class="list-section">
+            <h2>健康数据记录</h2>
+            {% if health_data %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>类型</th>
+                        <th>值</th>
+                        <th>记录时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in health_data %}
+                    <tr>
+                        <td>{{ record.date }}</td>
+                        <td>{{ record.type }}</td>
+                        <td>{{ record.value }}</td>
+                        <td>{{ record.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <!-- 删除按钮用表单提交 POST 请求 -->
+                            <form action="{{ url_for('delete_health', record_id=record.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="delete-button" onclick="return confirm('确定要删除这条健康数据吗？');">删除</button>
+                            </form>
+                            <!-- 修改功能暂未实现 -->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>暂无健康数据。</p>
+            {% endif %}
+        </div>
+
+        <!-- 显示任务列表 -->
+        <div class="list-section">
+            <h2>任务列表</h2>
+            {% if tasks %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>状态</th>
+                        <th>优先级</th>
+                        <th>描述</th>
+                        <th>截止日期</th>
+                        <th>添加时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr class="{{ 'task-done' if task.status == '已完成' else 'task-todo' }}">
+                        <td>{{ task.status }}</td>
+                        <td>{{ task.priority }}</td>
+                        <td>{{ task.description }}</td>
+                        <td>{{ task.due_date }}</td>
+                        <td>{{ task.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                             <!-- 标记完成/待办按钮 -->
+                             {% if task.status == '待办' %}
+                             <form action="{{ url_for('update_task_status', task_id=task.id, new_status='已完成') }}" method="post" style="display:inline;">
+                                <button type="submit" class="complete-button">完成</button>
+                             </form>
+                             {% else %}
+                             <form action="{{ url_for('update_task_status', task_id=task.id, new_status='待办') }}" method="post" style="display:inline;">
+                                <button type="submit" class="todo-button">标为待办</button>
+                             </form>
+                             {% endif %}
+                            <!-- 删除按钮 -->
+                            <form action="{{ url_for('delete_task', task_id=task.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="delete-button" onclick="return confirm('确定要删除这个任务吗？');">删除</button>
+                            </form>
+                             <!-- 修改功能暂未实现 -->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>暂无任务。</p>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,137 @@
+/* static/style.css */
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+h1, h2 {
+    color: #555;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.container {
+    background-color: #fff;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex; /* 让表单和列表并排显示 */
+    gap: 20px; /* 元素间距 */
+    flex-wrap: wrap; /* 允许换行 */
+}
+
+.form-section, .list-section {
+    flex: 1; /* 占据可用空间 */
+    min-width: 300px; /* 最小宽度 */
+}
+
+
+label {
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="date"],
+select {
+    width: 95%; /* 留一点边距 */
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 8px 15px;
+    background-color: #5cb85c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px; /* 按钮间距 */
+}
+
+button:hover {
+    background-color: #4cae4c;
+}
+
+.delete-button {
+    background-color: #d9534f;
+}
+.delete-button:hover {
+    background-color: #c9302c;
+}
+
+.complete-button {
+    background-color: #337ab7;
+}
+.complete-button:hover {
+    background-color: #286090;
+}
+
+.todo-button {
+    background-color: #f0ad4e;
+}
+.todo-button:hover {
+    background-color: #ec971f;
+}
+
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f9f9f9;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.task-done td {
+    text-decoration: line-through;
+    color: grey;
+}
+
+/* Flash 消息样式 */
+.flashes {
+    list-style: none;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+.flashes li {
+    padding: 8px;
+    margin-bottom: 5px;
+}
+.flashes .success {
+    background-color: #dff0d8;
+    border: 1px solid #d6e9c6;
+    color: #3c763d;
+}
+.flashes .error {
+    background-color: #f2dede;
+    border: 1px solid #ebccd1;
+    color: #a94442;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column; /* 在小屏幕上垂直排列 */
+    }
+}

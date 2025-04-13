@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartLife - 智能健康管理与任务追踪系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .health-card {
+            transition: all 0.3s ease;
+        }
+        .health-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .task-item {
+            transition: all 0.2s ease;
+        }
+        .task-item:hover {
+            background-color: #f8fafc;
+        }
+        .priority-high {
+            border-left: 4px solid #ef4444;
+        }
+        .priority-medium {
+            border-left: 4px solid #f59e0b;
+        }
+        .priority-low {
+            border-left: 4px solid #10b981;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #94a3b8;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tab-btn.active {
+            background-color: #4f46e5;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- 顶部导航栏 -->
+        <header class="bg-indigo-600 text-white shadow-md">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-heartbeat text-2xl"></i>
+                    <h1 class="text-2xl font-bold">SmartLife</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-1 bg-indigo-500 px-3 py-1 rounded-full">
+                        <i class="fas fa-coins text-yellow-300"></i>
+                        <span id="points-counter" class="font-medium">0</span>
+                    </div>
+                    <div class="relative">
+                        <button id="notification-btn" class="relative p-2 rounded-full hover:bg-indigo-500">
+                            <i class="fas fa-bell"></i>
+                            <span id="notification-badge" class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                        </button>
+                        <div id="notification-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-10 py-1">
+                            <div class="px-4 py-2 border-b border-gray-200">
+                                <h3 class="font-medium text-gray-800">通知</h3>
+                            </div>
+                            <div id="notification-list" class="max-h-60 overflow-y-auto">
+                                <!-- 通知内容会动态添加到这里 -->
+                            </div>
+                        </div>
+                    </div>
+                    <button id="logout-btn" class="p-2 rounded-full hover:bg-indigo-500">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+<!-- 主内容区 -->
+    <main class="flex-1 container mx-auto px-4 py-6">
+       <!-- 标签导航 -->
+<div class="mb-6 flex border-b border-gray-200">
+    <button id="dashboard-tab" class="tab-btn active px-4 py-2 font-medium text-sm focus:outline-none">
+        <i class="fas fa-home mr-2"></i>主页
+    </button>
+    <a href="/health-medical-info.html" class="tab-btn px-4 py-2 font-medium text-sm focus:outline-none">
+        <i class="fas fa-notes-medical mr-2"></i>健康与医疗档案
+    </a>
+    <a href="/health-records.html" class="tab-btn px-4 py-2 font-medium text-sm focus:outline-none">
+        <i class="fas fa-chart-line mr-2"></i>健康数据记录
+    </a>
+</div>
+
+<!-- 主页内容 -->
+<div id="dashboard-content" class="tab-content active">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- 左侧边栏 -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- 添加健康数据卡片 -->
+                    <div class="bg-white rounded-lg shadow-md p-6 fade-in">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-plus-circle text-indigo-500 mr-2"></i> 添加健康数据
+                        </h2>
+                        <form id="health-form" class="space-y-4">
+                            <div>
+                                <label for="steps" class="block text-sm font-medium text-gray-700 mb-1">今日步数</label>
+                                <div class="relative">
+                                    <input type="number" id="steps" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="输入步数">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span class="text-gray-500">步</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="sleep" class="block text-sm font-medium text-gray-700 mb-1">睡眠时长</label>
+                                <div class="relative">
+                                    <input type="number" id="sleep" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="输入小时数" step="0.1">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span class="text-gray-500">小时</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="water" class="block text-sm font-medium text-gray-700 mb-1">饮水量</label>
+                                <div class="relative">
+                                    <input type="number" id="water" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="输入毫升数">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span class="text-gray-500">ml</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="health-date" class="block text-sm font-medium text-gray-700 mb-1">日期</label>
+                                <input type="date" id="health-date" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-200 flex items-center justify-center">
+                                <i class="fas fa-save mr-2"></i> 保存数据
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- 添加任务卡片 -->
+                    <div class="bg-white rounded-lg shadow-md p-6 fade-in">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-tasks text-indigo-500 mr-2"></i> 添加任务
+                        </h2>
+                        <form id="task-form" class="space-y-4">
+                            <div>
+                                <label for="task-title" class="block text-sm font-medium text-gray-700 mb-1">任务标题</label>
+                                <input type="text" id="task-title" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="输入任务标题" required>
+                            </div>
+                            <div>
+                                <label for="task-description" class="block text-sm font-medium text-gray-700 mb-1">任务描述</label>
+                                <textarea id="task-description" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="输入任务描述"></textarea>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="task-priority" class="block text-sm font-medium text-gray-700 mb-1">优先级</label>
+                                    <select id="task-priority" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="high">高</option>
+                                        <option value="medium" selected>中</option>
+                                        <option value="low">低</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="task-category" class="block text-sm font-medium text-gray-700 mb-1">分类</label>
+                                    <select id="task-category" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="medical">医疗</option>
+                                        <option value="exercise">运动</option>
+                                        <option value="life" selected>生活</option>
+                                        <option value="health">健康</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="task-due" class="block text-sm font-medium text-gray-700 mb-1">截止日期</label>
+                                <input type="datetime-local" id="task-due" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="task-reminder" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                <label for="task-reminder" class="ml-2 block text-sm text-gray-700">设置提醒</label>
+                            </div>
+                            <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-200 flex items-center justify-center">
+                                <i class="fas fa-plus mr-2"></i> 添加任务
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 中间内容区 -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- 健康数据概览 -->
+                    <div class="bg-white rounded-lg shadow-md p-6 fade-in">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                                <i class="fas fa-chart-line text-indigo-500 mr-2"></i> 健康数据概览
+                            </h2>
+                            <div class="flex space-x-2">
+                                <button id="month-btn" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-md text-sm font-medium">月</button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <!-- 步数卡片 -->
+                            <div class="health-card bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-500">今日步数</p>
+                                        <h3 id="today-steps" class="text-2xl font-bold text-gray-800 mt-1">0</h3>
+                                    </div>
+                                    <div class="p-2 bg-blue-100 rounded-full">
+                                        <i class="fas fa-walking text-blue-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="steps-progress" class="bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">目标: 10,000 步</p>
+                                </div>
+                            </div>
+                            
+                            <!-- 睡眠卡片 -->
+                            <div class="health-card bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-500">睡眠时间</p>
+                                        <h3 id="today-sleep" class="text-2xl font-bold text-gray-800 mt-1">0</h3>
+                                    </div>
+                                    <div class="p-2 bg-purple-100 rounded-full">
+                                        <i class="fas fa-bed text-purple-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="sleep-progress" class="bg-purple-500 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">目标: 8 小时</p>
+                                </div>
+                            </div>
+                            
+                            <!-- 饮水卡片 -->
+                            <div class="health-card bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-500">饮水量</p>
+                                        <h3 id="today-water" class="text-2xl font-bold text-gray-800 mt-1">0</h3>
+                                    </div>
+                                    <div class="p-2 bg-green-100 rounded-full">
+                                        <i class="fas fa-tint text-green-500"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="water-progress" class="bg-green-500 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">目标: 2000 ml</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <canvas id="health-chart" height="200"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- 任务列表 -->
+                    <div class="bg-white rounded-lg shadow-md p-6 fade-in">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                                <i class="fas fa-clipboard-list text-indigo-500 mr-2"></i> 任务列表
+                            </h2>
+                            <div class="flex space-x-2">
+                                <button id="all-tasks-btn" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-md text-sm font-medium">全部</button>
+                                <button id="pending-tasks-btn" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm font-medium">待办</button>
+                                <button id="completed-tasks-btn" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm font-medium">已完成</button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2" id="tasks-container">
+                            <!-- 任务将通过JavaScript动态添加 -->
+                            <p class="text-gray-500 text-center py-4">请放轻松，不要再做任务了，休息一下吧...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 健康数据详情内容 -->
+        <div id="health-data-content" class="tab-content">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">健康数据详情</h1>
+                <p class="text-gray-600">查看您的健康数据历史记录和统计信息</p>
+            </div>
+
+            <!-- 健康数据统计卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="health-card bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">总步数</p>
+                            <h3 id="total-steps" class="text-3xl font-bold text-gray-800 mt-1">0</h3>
+                        </div>
+                        <div class="p-3 bg-blue-100 rounded-full">
+                            <i class="fas fa-walking text-blue-500 text-xl"></i>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500">自开始记录以来的总步数</p>
+                </div>
+
+                <div class="health-card bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">平均睡眠</p>
+                            <h3 id="avg-sleep" class="text-3xl font-bold text-gray-800 mt-1">0</h3>
+                        </div>
+                        <div class="p-3 bg-purple-100 rounded-full">
+                            <i class="fas fa-bed text-purple-500 text-xl"></i>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500">平均每日睡眠时间（小时）</p>
+                </div>
+
+                <div class="health-card bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">总饮水量</p>
+                            <h3 id="total-water" class="text-3xl font-bold text-gray-800 mt-1">0</h3>
+                        </div>
+                        <div class="p-3 bg-green-100 rounded-full">
+                            <i class="fas fa-tint text-green-500 text-xl"></i>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500">自开始记录以来的总饮水量（毫升）</p>
+                </div>
+
+                <div class="health-card bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">记录次数</p>
+                            <h3 id="days-recorded" class="text-3xl font-bold text-gray-800 mt-1">0</h3>
+                        </div>
+                        <div class="p-3 bg-yellow-100 rounded-full">
+                            <i class="fas fa-calendar-check text-yellow-500 text-xl"></i>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500">已记录健康数据的次数</p>
+                </div>
+            </div>
+
+            <!-- 图表和数据表格 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- 图表 -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">最近7天健康趋势</h2>
+                    <canvas id="health-trend-chart" height="300"></canvas>
+                </div>
+
+                <!-- 数据表格 -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">健康数据记录</h2>
+                        <div>
+                            <select id="period-filter" class="bg-gray-100 border border-gray-300 text-gray-700 py-2 px-3 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="week">最近一周</option>
+                                <option value="month">最近一个月</option>
+                                <option value="all">全部记录</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">步数</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">睡眠 (小时)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">饮水 (毫升)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="health-data-table" class="bg-white divide-y divide-gray-200">
+                                <!-- 数据将通过JavaScript动态加载 -->
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">请放轻松，不要再做任务了，休息一下吧...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部信息 -->
+    <footer class="bg-gray-100 border-t border-gray-200 py-4">
+        <div class="container mx-auto px-4 text-center text-gray-600 text-sm">
+            <p>© 2025 SmartLife - 23336233 智能健康管理与任务追踪系统. 保留所有权利.</p>
+        </div>
+    </footer>
+</div>
+
+<script>
+    let token = localStorage.getItem('smartlife_token');
+    let healthChart = null;
+    let healthTrendChart = null;
+
+    // 页面加载时检查是否已登录
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!token) {
+            window.location.href = '/';
+            return;
+        }
+
+        // 验证令牌
+        fetch('/api/auth/verify', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(response => {
+            if (!response.ok) {
+                localStorage.removeItem('smartlife_token');
+                window.location.href = '/';
+                return;
+            }
+            
+            // 初始化页面
+            initializePage();
+        })
+        .catch(err => {
+            console.error('验证令牌失败:', err);
+            localStorage.removeItem('smartlife_token');
+            window.location.href = '/';
+        });
+    });
+
+        // 初始化页面
+        function initializePage() {
+        // 设置标签切换
+        setupTabs();
+        
+        // 设置事件监听器
+        document.getElementById('logout-btn').addEventListener('click', logout);
+        document.getElementById('health-form').addEventListener('submit', addHealthData);
+        document.getElementById('task-form').addEventListener('submit', addTask);
+        
+        // 初始化任务列表
+        window.tasksList = [];
+        
+        // 加载数据
+        fetchUserPoints();
+        fetchHealthStats();
+        fetchTasks();
+        
+        // 设置时间周期按钮   
+        document.getElementById('month-btn').addEventListener('click', function() {
+            setActiveButton('month-btn', ['day-btn', 'week-btn', 'month-btn']);
+            updateHealthChart('month');
+        });
+        
+        // 设置任务过滤按钮
+        document.getElementById('all-tasks-btn').addEventListener('click', function() {
+            setActiveButton('all-tasks-btn', ['all-tasks-btn', 'pending-tasks-btn', 'completed-tasks-btn']);
+            filterTasks('all');
+        });
+        
+        document.getElementById('pending-tasks-btn').addEventListener('click', function() {
+            setActiveButton('pending-tasks-btn', ['all-tasks-btn', 'pending-tasks-btn', 'completed-tasks-btn']);
+            filterTasks('pending');
+        });
+        
+        document.getElementById('completed-tasks-btn').addEventListener('click', function() {
+            setActiveButton('completed-tasks-btn', ['all-tasks-btn', 'pending-tasks-btn', 'completed-tasks-btn']);
+            filterTasks('completed');
+        });
+        
+        // 设置默认日期为今天
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('health-date').value = today;
+        
+        // 初始化健康图表 - 默认使用月视图
+        updateHealthChart('month');
+    }
+
+    // 设置标签切换
+    function setupTabs() {
+        const dashboardTab = document.getElementById('dashboard-tab');
+        
+        dashboardTab.addEventListener('click', function() {
+            dashboardTab.classList.add('active');
+            document.getElementById('dashboard-content').classList.add('active');
+        });
+    }
+    // 设置按钮激活状态
+    function setActiveButton(activeId, allIds) {
+        allIds.forEach(id => {
+            const button = document.getElementById(id);
+            if (id === activeId) {
+                button.classList.remove('bg-gray-100', 'text-gray-700');
+                button.classList.add('bg-indigo-100', 'text-indigo-700');
+            } else {
+                button.classList.remove('bg-indigo-100', 'text-indigo-700');
+                button.classList.add('bg-gray-100', 'text-gray-700');
+            }
+        });
+    }
+
+    // 获取用户积分
+    async function fetchUserPoints() {
+        try {
+            const response = await fetch('/api/user/points', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('points-counter').textContent = data.points;
+            }
+        } catch (err) {
+            console.error('获取用户积分失败:', err);
+        }
+    }
+
+    // 获取健康数据统计
+    async function fetchHealthStats() {
+        try {
+            const response = await fetch('/api/health/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // 更新总体统计数据
+                document.getElementById('total-steps').textContent = data.totalStats.totalSteps.toLocaleString();
+                document.getElementById('avg-sleep').textContent = data.totalStats.avgSleep.toFixed(1);
+                document.getElementById('total-water').textContent = data.totalStats.totalWater.toLocaleString();
+                document.getElementById('days-recorded').textContent = data.totalStats.daysRecorded;
+                
+                // 更新今日数据
+                const today = new Date().toISOString().split('T')[0];
+                const todayData = data.recentData.find(item => item.date === today);
+                
+                if (todayData) {
+                    document.getElementById('today-steps').textContent = todayData.steps.toLocaleString();
+                    document.getElementById('today-sleep').textContent = todayData.sleep.toFixed(1);
+                    document.getElementById('today-water').textContent = todayData.water.toLocaleString();
+                    
+                    // 更新进度条
+                    const stepsProgress = Math.min(100, (todayData.steps / 10000) * 100);
+                    const sleepProgress = Math.min(100, (todayData.sleep / 8) * 100);
+                    const waterProgress = Math.min(100, (todayData.water / 2000) * 100);
+                    
+                    document.getElementById('steps-progress').style.width = `${stepsProgress}%`;
+                    document.getElementById('sleep-progress').style.width = `${sleepProgress}%`;
+                    document.getElementById('water-progress').style.width = `${waterProgress}%`;
+                }
+                
+                // 初始化健康趋势图表
+                initHealthTrendChart(data.recentData);
+            }
+        } catch (err) {
+            console.error('获取健康数据统计失败:', err);
+        }
+    }
+
+    // 初始化健康趋势图表
+            // 初始化健康趋势图表
+                    // 初始化健康趋势图表
+    function initHealthTrendChart(data) {
+        const ctx = document.getElementById('health-trend-chart').getContext('2d');
+        
+        // 获取当前日期和本周开始日期
+        const today = new Date();
+        const day = today.getDay(); // 0是周日，1是周一，以此类推
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() - day); // 设置为本周的周日
+        startDate.setHours(0, 0, 0, 0);
+        
+        // 过滤出本周的数据
+        const thisWeekData = data.filter(item => {
+            const itemDate = new Date(item.date);
+            return itemDate >= startDate;
+        });
+        
+        // 按日期分组合并同一天的数据
+        const groupedData = {};
+        
+        thisWeekData.forEach(item => {
+            const dateStr = item.date.split('T')[0]; // 确保只取日期部分
+            if (!groupedData[dateStr]) {
+                groupedData[dateStr] = {
+                    date: dateStr,
+                    steps: 0,
+                    sleep: 0,
+                    water: 0,
+                    count: 0
+                };
+            }
+            
+            groupedData[dateStr].steps += item.steps;
+            groupedData[dateStr].sleep += item.sleep;
+            groupedData[dateStr].water += item.water;
+            groupedData[dateStr].count += 1;
+        });
+        
+        // 计算每天的平均值
+        // ... 现有代码保持不变 ...
+        
+        // 计算每天的平均值
+        const aggregatedData = Object.values(groupedData).map(item => {
+            return {
+                date: item.date,
+                steps: item.steps,
+                sleep: item.count > 1 ? item.sleep / item.count : item.sleep, // 睡眠取平均值
+                water: item.water
+            };
+        });
+        
+        // 按日期排序
+        aggregatedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        // 准备数据
+        const dates = aggregatedData.map(item => {
+            const date = new Date(item.date);
+            return `${date.getMonth() + 1}/${date.getDate()}`;
+        });
+        
+        const steps = aggregatedData.map(item => item.steps);
+        const sleep = aggregatedData.map(item => item.sleep);
+        const water = aggregatedData.map(item => item.water / 100); // 缩小比例以便在图表上显示
+        
+        if (healthTrendChart) {
+            healthTrendChart.destroy();
+        }
+        
+        healthTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: '步数',
+                        data: steps,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: '睡眠 (小时)',
+                        data: sleep,
+                        borderColor: 'rgb(139, 92, 246)',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.1,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: '饮水量 (x100ml)',
+                        data: water,
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.1,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: '步数'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: '睡眠/饮水'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+    }
+
+    // 获取健康数据
+    async function fetchHealthData(period) {
+        try {
+            const response = await fetch(`/api/health?period=${period}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // 更新数据表格
+                const tableBody = document.getElementById('health-data-table');
+                
+                if (data.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-gray-500">暂无数据</td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tableBody.innerHTML = '';
+                
+                data.forEach(item => {
+                    const date = new Date(item.date);
+                    const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formattedDate}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.steps.toLocaleString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.sleep.toFixed(1)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.water.toLocaleString()}</td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+            }
+        } catch (err) {
+            console.error('获取健康数据失败:', err);
+        }
+    }
+
+    // 更新健康图表
+            // 更新健康图表
+                    // 更新健康图表
+    async function updateHealthChart(period) {
+        try {
+            const response = await fetch(`/api/health?period=${period}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // 准备数据
+                let chartData;
+                
+                if (period === 'day') {
+                    // 今日数据
+                    // ... 现有代码保持不变 ...
+                } else {
+                    // 周/月数据 - 合并同一天的数据
+                    // 按日期分组
+                    const groupedData = {};
+                    
+                    // 获取当前日期
+                    const today = new Date();
+                    
+                    // 如果是周视图，计算本周的开始日期（周日为一周的开始）
+                    let startDate = null;
+                    if (period === 'week') {
+                        const day = today.getDay(); // 0是周日，1是周一，以此类推
+                        startDate = new Date(today);
+                        startDate.setDate(today.getDate() - day); // 设置为本周的周日
+                        startDate.setHours(0, 0, 0, 0);
+                    }
+                    
+                    data.forEach(item => {
+                        const itemDate = new Date(item.date);
+                        
+                        // 如果是周视图，只显示本周的数据
+                        if (period === 'week' && itemDate < startDate) {
+                            return; // 跳过本周之前的数据
+                        }
+                        
+                        const dateStr = item.date.split('T')[0]; // 确保只取日期部分
+                        if (!groupedData[dateStr]) {
+                            groupedData[dateStr] = {
+                                date: dateStr,
+                                steps: 0,
+                                sleep: 0,
+                                water: 0,
+                                count: 0
+                            };
+                        }
+                        
+                        groupedData[dateStr].steps += item.steps;
+                        groupedData[dateStr].sleep += item.sleep;
+                        groupedData[dateStr].water += item.water;
+                        groupedData[dateStr].count += 1;
+                    });
+                    
+                    // 计算每天的平均值
+                    // ... 现有代码保持不变 ...
+                    
+                    // 计算每天的平均值
+                    const aggregatedData = Object.values(groupedData).map(item => {
+                        return {
+                            date: item.date,
+                            steps: item.steps,
+                            sleep: item.count > 1 ? item.sleep / item.count : item.sleep, // 睡眠取平均值
+                            water: item.water
+                        };
+                    });
+                    
+                    // 按日期排序
+                    aggregatedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    
+                    const dates = [];
+                    const steps = [];
+                    const sleep = [];
+                    const water = [];
+                    
+                    aggregatedData.forEach(item => {
+                        const date = new Date(item.date);
+                        dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
+                        steps.push(item.steps);
+                        sleep.push(item.sleep);
+                        water.push(item.water / 1000); // 转换为升
+                    });
+                    
+                    chartData = {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: '步数',
+                                data: steps,
+                                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                borderWidth: 2,
+                                tension: 0.1,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: '睡眠 (小时)',
+                                data: sleep,
+                                backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                                borderColor: 'rgba(139, 92, 246, 1)',
+                                borderWidth: 2,
+                                tension: 0.1,
+                                yAxisID: 'y1'
+                            },
+                            {
+                                label: '饮水量 (L)',
+                                data: water,
+                                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                                borderColor: 'rgba(16, 185, 129, 1)',
+                                borderWidth: 2,
+                                tension: 0.1,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    };
+                }
+                
+                // 更新图表
+                const ctx = document.getElementById('health-chart').getContext('2d');
+                
+                if (healthChart) {
+                    healthChart.destroy();
+                }
+                
+                // 其余代码保持不变
+                
+                if (period === 'day') {
+                    healthChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: chartData,
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.raw || 0;
+                                            return `${label}: ${value.toLocaleString()}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    healthChart = new Chart(ctx, {
+                        type: 'line',
+                        data: chartData,
+                        options: {
+                            responsive: true,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
+                            scales: {
+                                y: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                    title: {
+                                        display: true,
+                                        text: '步数'
+                                    }
+                                },
+                                y1: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'right',
+                                    title: {
+                                        display: true,
+                                        text: '睡眠/饮水'
+                                    },
+                                    grid: {
+                                        drawOnChartArea: false,
+                                    },
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('更新健康图表失败:', err);
+        }
+    }
+
+    // 添加健康数据
+    async function addHealthData(e) {
+        e.preventDefault();
+        
+        const steps = document.getElementById('steps').value;
+        const sleep = document.getElementById('sleep').value;
+        const water = document.getElementById('water').value;
+        const date = document.getElementById('health-date').value;
+        
+        if (!steps || !sleep || !water) {
+            alert('请填写所有健康数据字段');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/health', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    steps: parseInt(steps),
+                    sleep: parseFloat(sleep),
+                    water: parseInt(water),
+                    date
+                })
+            });
+            
+            if (response.ok) {
+                // 重置表单
+                document.getElementById('health-form').reset();
+                document.getElementById('health-date').value = new Date().toISOString().split('T')[0];
+                
+                // 刷新数据
+                fetchUserPoints();
+                fetchHealthStats();
+                fetchHealthData(document.getElementById('period-filter').value);
+                updateHealthChart('day');
+                
+                // 显示成功消息
+                alert('健康数据添加成功！获得5积分奖励。');
+            } else {
+                const data = await response.json();
+                alert(`添加失败: ${data.error || '未知错误'}`);
+            }
+        } catch (err) {
+            console.error('添加健康数据失败:', err);
+            alert('添加健康数据时发生错误，请重试');
+        }
+    }
+
+    // 获取任务列表
+    async function fetchTasks() {
+        try {
+            const response = await fetch('/api/tasks', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // 保存任务数据到全局变量
+                window.tasksList = data;
+                
+                // 默认显示所有任务
+                filterTasks('all');
+            }
+        } catch (err) {
+            console.error('获取任务列表失败:', err);
+            document.getElementById('tasks-container').innerHTML = `
+                <p class="text-red-500 text-center py-4">获取任务失败，请刷新页面重试</p>
+            `;
+        }
+    }
+
+    // 渲染任务列表
+           // 渲染任务
+           function renderTasks(tasks) {
+        const tasksContainer = document.getElementById('tasks-container');
+        
+        if (tasks.length === 0) {
+            tasksContainer.innerHTML = '<p class="text-gray-500 text-center py-4">暂无任务</p>';
+            return;
+        }
+        
+        tasksContainer.innerHTML = '';
+        
+        tasks.forEach(task => {
+            const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+            const isOverdue = dueDate && dueDate < new Date() && !task.completed;
+            
+            const taskElement = document.createElement('div');
+            taskElement.className = `task-item p-4 bg-white border rounded-lg shadow-sm mb-3 ${task.completed ? 'completed' : ''} priority-${task.priority}`;
+            taskElement.dataset.id = task._id; // 确保设置正确的ID
+            
+            taskElement.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0 pt-1">
+                            <input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" ${task.completed ? 'checked' : ''} onchange="toggleTaskStatus('${task._id}', this.checked)">
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-900 ${task.completed ? 'line-through text-gray-500' : ''}">${task.title}</h3>
+                            <p class="text-xs text-gray-500 mt-1">${task.description || '无描述'}</p>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getCategoryClass(task.category)}">
+                                    ${getCategoryIcon(task.category)} ${getCategoryName(task.category)}
+                                </span>
+                                ${dueDate ? `
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isOverdue ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
+                                    <i class="fas fa-clock mr-1"></i> ${formatDate(dueDate)}
+                                </span>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-1">
+                        <button onclick="deleteTask('${task._id}')" class="p-1 text-gray-400 hover:text-red-500">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            tasksContainer.appendChild(taskElement);
+        });
+    }
+
+    
+    async function addTask(e) {
+        e.preventDefault();
+        
+        const title = document.getElementById('task-title').value;
+        const description = document.getElementById('task-description').value;
+        const priority = document.getElementById('task-priority').value;
+        const category = document.getElementById('task-category').value;
+        const dueDate = document.getElementById('task-due').value;
+        const reminder = document.getElementById('task-reminder').checked;
+        
+        if (!title) {
+            alert('请输入任务标题');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title,
+                    description,
+                    priority,
+                    category,
+                    dueDate,
+                    reminder
+                })
+            });
+            
+            if (response.ok) {
+                const newTask = await response.json();
+                
+                // 将新任务添加到本地任务列表
+                if (!window.tasksList) {
+                    window.tasksList = [];
+                }
+                window.tasksList.push(newTask);
+                
+                // 清空表单
+                document.getElementById('task-form').reset();
+                
+                // 重新渲染任务列表
+                const activeFilterBtn = document.querySelector('.bg-indigo-100.text-indigo-700');
+                const filter = activeFilterBtn.id === 'all-tasks-btn' ? 'all' : 
+                              activeFilterBtn.id === 'pending-tasks-btn' ? 'pending' : 'completed';
+                filterTasks(filter);
+                
+                // 显示成功消息
+                alert('任务添加成功！');
+            } else {
+                const error = await response.json();
+                alert(`添加任务失败: ${error.message || '未知错误'}`);
+            }
+        } catch (err) {
+            console.error('添加任务失败:', err);
+            alert('添加任务失败，请稍后再试');
+        }
+    }
+
+    // 获取任务列表
+    async function fetchTasks() {
+        try {
+            const response = await fetch('/api/tasks', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // 保存任务数据到全局变量
+                window.tasksList = data;
+                
+                // 默认显示所有任务
+                filterTasks('all');
+            }
+        } catch (err) {
+            console.error('获取任务列表失败:', err);
+            document.getElementById('tasks-container').innerHTML = `
+                <p class="text-red-500 text-center py-4">获取任务失败，请刷新页面重试</p>
+            `;
+        }
+    }
+
+    // 过滤任务
+
+
+    // 过滤任务
+    function filterTasks(filter) {
+        const tasksContainer = document.getElementById('tasks-container');
+        
+        // 从全局变量获取任务列表
+        const tasks = window.tasksList || [];
+        
+        if (tasks.length === 0) {
+            tasksContainer.innerHTML = '<p class="text-gray-500 text-center py-4">暂无任务</p>';
+            return;
+        }
+        
+        // 根据过滤条件筛选任务
+        let filteredTasks = [];
+        if (filter === 'all') {
+            filteredTasks = tasks;
+        } else if (filter === 'pending') {
+            filteredTasks = tasks.filter(task => !task.completed);
+        } else if (filter === 'completed') {
+            filteredTasks = tasks.filter(task => task.completed);
+        }
+        
+        if (filteredTasks.length === 0) {
+            tasksContainer.innerHTML = `<p class="text-gray-500 text-center py-4">暂无${filter === 'pending' ? '待办' : '已完成'}任务</p>`;
+            return;
+        }
+        
+        // 清空容器
+        tasksContainer.innerHTML = '';
+        
+        // 渲染任务列表
+        filteredTasks.forEach(task => {
+            const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+            const isOverdue = dueDate && dueDate < new Date() && !task.completed;
+            
+            const taskElement = document.createElement('div');
+            taskElement.className = `task-item p-4 bg-white border rounded-lg shadow-sm mb-3 ${task.completed ? 'completed' : ''} priority-${task.priority}`;
+            taskElement.dataset.id = task.id; // 设置数据属性以便后续操作
+            
+            taskElement.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0 pt-1">
+                            <input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" ${task.completed ? 'checked' : ''}>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-900 ${task.completed ? 'line-through text-gray-500' : ''}">${task.title}</h3>
+                            <p class="text-xs text-gray-500 mt-1">${task.description || '无描述'}</p>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getCategoryClass(task.category)}">
+                                    ${getCategoryIcon(task.category)} ${getCategoryName(task.category)}
+                                </span>
+                                ${dueDate ? `
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isOverdue ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
+                                    <i class="fas fa-clock mr-1"></i> ${formatDate(dueDate)}
+                                </span>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-1">
+                        <button class="delete-task-btn p-1 text-gray-400 hover:text-red-500">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 添加任务复选框事件监听
+            const checkbox = taskElement.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('change', function() {
+                toggleTaskStatus(task.id, this.checked);
+            });
+            
+            // 添加删除按钮事件监听
+            const deleteBtn = taskElement.querySelector('.delete-task-btn');
+            deleteBtn.addEventListener('click', function() {
+                deleteTask(task.id);
+            });
+            
+            tasksContainer.appendChild(taskElement);
+        });
+    }
+        
+        // 清空容器
+        tasksContainer.innerHTML = '';
+        
+        // 渲染任务列表
+        filteredTasks.forEach(task => {
+            const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+            const isOverdue = dueDate && dueDate < new Date() && !task.completed;
+            
+            const taskElement = document.createElement('div');
+            taskElement.className = `task-item p-4 bg-white border rounded-lg shadow-sm mb-3 ${task.completed ? 'completed' : ''} priority-${task.priority}`;
+            
+            taskElement.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0 pt-1">
+                            <input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" ${task.completed ? 'checked' : ''} onchange="toggleTaskStatus('${task._id}', this.checked)">
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-900 ${task.completed ? 'line-through text-gray-500' : ''}">${task.title}</h3>
+                            <p class="text-xs text-gray-500 mt-1">${task.description || '无描述'}</p>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getCategoryClass(task.category)}">
+                                    ${getCategoryIcon(task.category)} ${getCategoryName(task.category)}
+                                </span>
+                                ${dueDate ? `
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isOverdue ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
+                                    <i class="fas fa-clock mr-1"></i> ${formatDate(dueDate)}
+                                </span>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-1">
+                        <button onclick="deleteTask('${task._id}')" class="p-1 text-gray-400 hover:text-red-500">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            tasksContainer.appendChild(taskElement);
+    });
+    
+
+    // 切换任务状态
+    async function toggleTaskStatus(taskId, completed) {
+        try {
+            const response = await fetch(`/api/tasks/${taskId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ completed })
+            });
+            
+            if (response.ok) {
+                // 更新本地任务列表
+                const taskIndex = window.tasksList.findIndex(task => task.id === taskId);
+                if (taskIndex !== -1) {
+                    window.tasksList[taskIndex].completed = completed;
+                    
+                    // 重新过滤和显示任务
+                    const activeFilterBtn = document.querySelector('.bg-indigo-100.text-indigo-700');
+                    const filter = activeFilterBtn.id === 'all-tasks-btn' ? 'all' : 
+                                  activeFilterBtn.id === 'pending-tasks-btn' ? 'pending' : 'completed';
+                    filterTasks(filter);
+                }
+            } else {
+                alert('更新任务状态失败，请稍后再试');
+            }
+        } catch (err) {
+            console.error('更新任务状态失败:', err);
+            alert('更新任务状态失败，请稍后再试');
+        }
+    }
+
+           // 删除任务
+                  // 删除任务
+                  async function deleteTask(taskId) {
+        if (!confirm('确定要删除这个任务吗？')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/tasks/${taskId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                // 从本地任务列表中移除
+                window.tasksList = window.tasksList.filter(task => task.id !== taskId);
+                
+                // 重新渲染任务列表
+                const activeFilterBtn = document.querySelector('.bg-indigo-100.text-indigo-700');
+                const filter = activeFilterBtn.id === 'all-tasks-btn' ? 'all' : 
+                              activeFilterBtn.id === 'pending-tasks-btn' ? 'pending' : 'completed';
+                filterTasks(filter);
+                
+                // 显示删除成功提示
+                alert('任务已成功删除');
+            } else {
+                alert('删除任务失败，请稍后再试');
+            }
+        } catch (err) {
+            console.error('删除任务失败:', err);
+            alert('删除任务失败，请稍后再试');
+        }
+    }
+
+    // 获取分类样式
+    function getCategoryClass(category) {
+        switch (category) {
+            case 'medical': return 'bg-red-100 text-red-800';
+            case 'exercise': return 'bg-blue-100 text-blue-800';
+            case 'health': return 'bg-green-100 text-green-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    }
+
+    // 获取分类图标
+    function getCategoryIcon(category) {
+        switch (category) {
+            case 'medical': return '<i class="fas fa-pills mr-1"></i>';
+            case 'exercise': return '<i class="fas fa-running mr-1"></i>';
+            case 'health': return '<i class="fas fa-heartbeat mr-1"></i>';
+            default: return '<i class="fas fa-tasks mr-1"></i>';
+        }
+    }
+
+    // 获取分类名称
+    function getCategoryName(category) {
+        switch (category) {
+            case 'medical': return '医疗';
+            case 'exercise': return '运动';
+            case 'health': return '健康';
+            default: return '生活';
+        }
+    }
+
+    // 格式化日期
+    function formatDate(date) {
+        return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    }
+
+    // 退出登录
+    function logout() {
+        localStorage.removeItem('smartlife_token');
+        window.location.href = '/';
+    }
+</script>

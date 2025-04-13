@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartLife - 智能健康与任务管理</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>SmartLife 系统</h1>
+    <div class="points-display">
+        <h2>当前积分: {{ user_points }}</h2>
+    </div>
+
+    <!-- Flash 消息 -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class=flashes>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <!-- 表单区域 -->
+    <div class="container forms-container">
+        <!-- 添加健康数据 -->
+        <div class="form-section">
+            <h2><span class="icon">➕</span> 添加健康数据</h2>
+            <form action="{{ url_for('add_health') }}" method="post">
+                <label for="health_date">日期:</label>
+                <input type="date" id="health_date" name="health_date" required value="{{ now.strftime('%Y-%m-%d') }}"> <!-- 默认当天 -->
+
+                <label for="health_type">类型:</label>
+                <input type="text" id="health_type" name="health_type" placeholder="例如: 步数, 睡眠小时" required>
+
+                <label for="health_value">值:</label>
+                <input type="text" id="health_value" name="health_value" placeholder="例如: 10000, 7.5" required>
+
+                <button type="submit">添加数据</button>
+            </form>
+        </div>
+
+        <!-- 添加任务 -->
+        <div class="form-section">
+            <h2><span class="icon">📝</span> 添加任务</h2>
+            <form action="{{ url_for('add_task') }}" method="post">
+                <label for="task_description">任务描述:</label>
+                <input type="text" id="task_description" name="task_description" required>
+
+                <label for="task_priority">优先级:</label>
+                <select id="task_priority" name="task_priority">
+                    <option value="高">高</option>
+                    <option value="中" selected>中</option>
+                    <option value="低">低</option>
+                </select>
+
+                <label for="task_due_date">截止日期:</label>
+                <input type="date" id="task_due_date" name="task_due_date">
+
+                <label for="task_group">分组 (可选):</label>
+                <input type="text" id="task_group" name="task_group" placeholder="例如: 工作, 学习">
+
+                <label for="task_tags">标签 (可选, 逗号分隔):</label>
+                <input type="text" id="task_tags" name="task_tags" placeholder="例如: 重要, 紧急, 购物">
+
+                <button type="submit">添加任务</button>
+            </form>
+        </div>
+
+        <!-- 设置健康目标 -->
+        <div class="form-section">
+            <h2><span class="icon">🎯</span> 设置/更新健康目标</h2>
+            <form action="{{ url_for('set_goal') }}" method="post">
+                 <label for="goal_type">目标类型:</label>
+                 <input type="text" id="goal_type" name="goal_type" placeholder="例如: 步数, 饮水毫升" required>
+                 <!-- 或者用下拉选择常见类型 -->
+                 <!-- <select id="goal_type" name="goal_type" required>
+                    <option value="步数">步数</option>
+                    <option value="饮水毫升">饮水毫升</option>
+                    <option value="睡眠小时">睡眠小时</option>
+                 </select> -->
+
+                 <label for="goal_target">目标值:</label>
+                 <input type="number" id="goal_target" name="goal_target" step="any" placeholder="例如: 10000, 2000" required>
+
+                 <label for="goal_period">周期:</label>
+                 <select id="goal_period" name="goal_period" required>
+                     <option value="daily" selected>每日</option>
+                     <option value="weekly">每周</option>
+                 </select>
+                 <button type="submit">设置/更新目标</button>
+            </form>
+             <!-- 显示已设置的目标 -->
+             {% if goals %}
+             <h4>已设目标:</h4>
+             <ul class="goal-list-small">
+                {% for goal in goals %}
+                <li>
+                    {{ goal.type }} ({{ '每日' if goal.period == 'daily' else '每周' }}): {{ goal.target }}
+                    <form action="{{ url_for('delete_goal', goal_id=goal.id) }}" method="post" style="display:inline;">
+                        <button type="submit" class="delete-button-small" title="删除目标" onclick="return confirm('确定删除这个目标吗？');">×</button>
+                    </form>
+                </li>
+                {% endfor %}
+             </ul>
+             {% endif %}
+        </div>
+    </div>
+
+    <!-- 数据展示区域 -->
+    <div class="container data-section">
+
+        <!-- 健康目标追踪 -->
+        <div class="list-section goal-tracking-section">
+            <h2><span class="icon">📊</span> 健康目标追踪 (今日/本周)</h2>
+            {% if goals %}
+                {% for goal in goals %}
+                    {% set progress = goal_progress.get(goal.id) %}
+                    {% if progress %}
+                    <div class="goal-item">
+                        <strong>{{ progress.type }} ({{ '每日' if progress.period == 'daily' else '每周' }})</strong>
+                        <p>周期: {{ progress.period_str }}</p>
+                        <p>进度: {{ progress.current }} / {{ progress.target }}</p>
+                        <div class="progress-bar-container">
+                             <div class="progress-bar" style="width: {{ [progress.percentage, 100]|min }}%;"> <!-- 最大100% -->
+                                {{ progress.percentage }}%
+                             </div>
+                        </div>
+                         {% if progress.percentage >= 100 %}
+                            <p class="motivation success">🎉 目标达成！太棒了！</p>
+                         {% elif progress.percentage >= 75 %}
+                            <p class="motivation good">👍 很接近了，加油！</p>
+                         {% elif progress.percentage >= 50 %}
+                            <p class="motivation ok">💪 完成一半了，继续努力！</p>
+                         {% else %}
+                             <p class="motivation encouragement">🏃 开始行动吧！</p>
+                         {% endif %}
+                    </div>
+                    {% else %}
+                     <div class="goal-item">
+                        <strong>{{ goal.type }} ({{ '每日' if goal.period == 'daily' else '每周' }})</strong>
+                        <p>目标: {{ goal.target }}</p>
+                        <p><i>今日/本周暂无相关数据来计算进度。</i></p>
+                     </div>
+                    {% endif %}
+                    <hr>
+                {% endfor %}
+            {% else %}
+                <p>尚未设置任何健康目标。请在上方表单中设置。</p>
+            {% endif %}
+        </div>
+
+
+        <!-- 任务列表 -->
+        <div class="list-section task-list-section">
+             <div class="list-header">
+                <h2><span class="icon">📋</span> 任务列表</h2>
+                <!-- 过滤选项 -->
+                <div class="filters">
+                    <form method="get" action="{{ url_for('index') }}" style="display: inline;">
+                        <label for="status_filter">状态:</label>
+                        <select name="status" id="status_filter" onchange="this.form.submit()">
+                            <option value="" {% if not filters_active.status %}selected{% endif %}>所有</option>
+                            <option value="待办" {% if filters_active.status == '待办' %}selected{% endif %}>待办</option>
+                            <option value="已完成" {% if filters_active.status == '已完成' %}selected{% endif %}>已完成</option>
+                        </select>
+
+                        <label for="group_filter">分组:</label>
+                        <select name="group" id="group_filter" onchange="this.form.submit()">
+                            <option value="" {% if not filters_active.group %}selected{% endif %}>所有</option>
+                            {% for group in all_groups %}
+                            <option value="{{ group }}" {% if filters_active.group == group %}selected{% endif %}>{{ group }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <label for="tag_filter">标签:</label>
+                        <select name="tag" id="tag_filter" onchange="this.form.submit()">
+                            <option value="" {% if not filters_active.tag %}selected{% endif %}>所有</option>
+                            {% for tag in all_tags %}
+                            <option value="{{ tag }}" {% if filters_active.tag == tag %}selected{% endif %}>{{ tag }}</option>
+                            {% endfor %}
+                        </select>
+                        <noscript><button type="submit">筛选</button></noscript>
+                        {% if filters_active.status or filters_active.group or filters_active.tag %}
+                            <a href="{{ url_for('index') }}" class="clear-filter-link">清除筛选</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+            {% if tasks %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>状态</th>
+                        <th>优先级</th>
+                        <th>描述</th>
+                        <th>分组</th>
+                        <th>标签</th>
+                        <th>截止日期</th>
+                        <!-- <th>添加时间</th> -->
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr class="{{ 'task-done' if task.status == '已完成' else 'task-todo' }}
+                               {{ 'task-overdue' if task.reminder_status == 'overdue' }}
+                               {{ 'task-upcoming' if task.reminder_status == 'upcoming' }}">
+                        <td>{{ task.status }}</td>
+                        <td>
+                            <span class="priority-{{ task.priority.lower() }}">{{ task.priority }}</span>
+                        </td>
+                        <td>{{ task.description }}
+                           {% if task.reminder_status == 'overdue' %} <span class="reminder-icon overdue">❗已过期</span>{% endif %}
+                           {% if task.reminder_status == 'upcoming' %} <span class="reminder-icon upcoming">🔔即将到期</span>{% endif %}
+                        </td>
+                        <td>{{ task.group or '无' }}</td>
+                        <td>
+                           {% if task.tags %}
+                               {% for tag in task.tags %}
+                                   <span class="tag">{{ tag }}</span>
+                               {% endfor %}
+                           {% else %}
+                               无
+                           {% endif %}
+                        </td>
+                        <td>{{ task.due_date if task.due_date != '无' else '--' }}</td>
+                        <!-- <td>{{ task.timestamp.strftime('%Y-%m-%d %H:%M') }}</td> -->
+                        <td>
+                            <div class="action-buttons">
+                                <!-- 状态切换 -->
+                                {% if task.status == '待办' %}
+                                <form action="{{ url_for('update_task_status', task_id=task.id, new_status='已完成') }}{{ ('?' + request.query_string.decode()) if request.query_string else '' }}" method="post" style="display:inline;">
+                                    <button type="submit" class="complete-button" title="标记为已完成">✔</button>
+                                </form>
+                                {% else %}
+                                <form action="{{ url_for('update_task_status', task_id=task.id, new_status='待办') }}{{ ('?' + request.query_string.decode()) if request.query_string else '' }}" method="post" style="display:inline;">
+                                    <button type="submit" class="todo-button" title="标记为待办">↩</button>
+                                </form>
+                                {% endif %}
+                                <!-- 编辑按钮 -->
+                                <a href="{{ url_for('edit_task_page', task_id=task.id) }}" class="edit-button" title="编辑任务">✏️</a>
+                                <!-- 删除按钮 -->
+                                <form action="{{ url_for('delete_task', task_id=task.id) }}{{ ('?' + request.query_string.decode()) if request.query_string else '' }}" method="post" style="display:inline;">
+                                    <button type="submit" class="delete-button" title="删除任务" onclick="return confirm('确定要删除这个任务吗？');">🗑️</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>暂无任务满足当前筛选条件，或还没有添加任何任务。</p>
+            {% endif %}
+        </div>
+
+        <!-- 健康数据记录 -->
+        <div class="list-section health-data-section">
+            <h2><span class="icon">💓</span> 健康数据记录</h2>
+             {% if health_data %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>类型</th>
+                        <th>值</th>
+                        <th>记录时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in health_data %}
+                    <tr>
+                        <td>{{ record.date }}</td>
+                        <td>{{ record.type }}</td>
+                        <td>{{ record.value }}</td>
+                        <td>{{ record.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <form action="{{ url_for('delete_health', record_id=record.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="delete-button" title="删除记录" onclick="return confirm('确定要删除这条健康数据吗？');">🗑️</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+             {% else %}
+            <p>暂无健康数据。</p>
+             {% endif %}
+        </div>
+
+    </div>
+
+    <!-- 用于日期默认值 -->
+    <script>
+        // 确保默认日期是用户的本地日期
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const dateInput = document.getElementById('health_date');
+            if (dateInput && !dateInput.value) { // 仅当值为空时设置
+                 const today = new Date();
+                 const yyyy = today.getFullYear();
+                 const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+                 const dd = String(today.getDate()).padStart(2, '0');
+                 dateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+        });
+    </script>
+</body>
+</html>

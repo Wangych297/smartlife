@@ -1,0 +1,234 @@
+/* static/style.css (添加部分) */
+
+/* 积分显示 */
+.points-display {
+    text-align: right;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+    color: #337ab7;
+}
+
+/* 表单和数据区域布局调整 */
+.forms-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap; /* 允许换行 */
+    margin-bottom: 30px; /* 增加与下方数据区的距离 */
+}
+.data-section {
+     display: flex;
+     gap: 20px;
+     flex-wrap: wrap; /* 允许换行 */
+}
+
+
+.form-section, .list-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    flex: 1; /* 尝试均分空间 */
+    min-width: 350px; /* 设置最小宽度防止过窄 */
+    margin-bottom: 20px; /* 每个区块底部加间距 */
+}
+
+.form-section h2, .list-section h2 {
+    margin-top: 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    font-size: 1.4em;
+    color: #444;
+}
+.form-section h2 .icon, .list-section h2 .icon {
+    margin-right: 8px;
+}
+
+/* 调整列表区域使其更有区分度 */
+.task-list-section { order: 1; } /* 任务列表优先显示 */
+.goal-tracking-section { order: 2; background-color: #f0f8ff; } /* 目标追踪背景稍不同 */
+.health-data-section { order: 3; }
+
+/* 过滤区域 */
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* 允许换行 */
+    margin-bottom: 15px;
+}
+.list-header h2 {
+    margin-bottom: 0; /* 移除标题下的默认间距 */
+    border-bottom: none; /* 移除标题下的线 */
+}
+.filters {
+    margin-top: 10px; /* 在换行时与标题保持距离 */
+}
+.filters label {
+    margin-left: 10px;
+    font-size: 0.9em;
+}
+.filters select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-right: 5px;
+}
+.clear-filter-link {
+    margin-left: 10px;
+    font-size: 0.9em;
+    color: #777;
+    text-decoration: none;
+}
+.clear-filter-link:hover {
+    color: #d9534f;
+}
+
+
+/* 任务表格样式增强 */
+td .tag {
+    background-color: #e0e0e0;
+    color: #555;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    margin-right: 3px;
+    display: inline-block; /* 使margin生效 */
+    white-space: nowrap; /* 防止标签内换行 */
+}
+
+td .priority-高 { color: red; font-weight: bold; }
+td .priority-中 { color: orange; }
+td .priority-低 { color: green; }
+
+/* 提醒样式 */
+.task-overdue { background-color: #fdd; } /* 淡红色背景表示过期 */
+.task-upcoming { background-color: #fffacd; } /* 淡黄色背景表示即将到期 */
+
+.reminder-icon {
+    font-size: 0.8em;
+    margin-left: 5px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+.reminder-icon.overdue { color: white; background-color: red; }
+.reminder-icon.upcoming { color: black; background-color: gold; }
+
+
+/* 健康目标进度条 */
+.goal-tracking-section hr {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 15px 0;
+}
+.goal-item {
+    margin-bottom: 15px;
+}
+.goal-item strong {
+    font-size: 1.1em;
+    color: #337ab7;
+}
+.progress-bar-container {
+    width: 100%;
+    background-color: #e9ecef;
+    border-radius: 0.25rem;
+    margin: 5px 0;
+    height: 20px; /* 固定高度 */
+    overflow: hidden; /* 隐藏超出部分 */
+    position: relative; /* 为了让内部文字居中 */
+}
+.progress-bar {
+    background-color: #5cb85c;
+    height: 100%;
+    line-height: 20px; /* 与高度一致 */
+    color: white;
+    text-align: center;
+    white-space: nowrap; /* 防止文字换行 */
+    font-size: 0.8em;
+    font-weight: bold;
+    transition: width 0.6s ease; /* 平滑过渡效果 */
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.15); /* 内部阴影增加立体感 */
+}
+
+/* 激励语样式 */
+.motivation {
+    font-style: italic;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+.motivation.success { color: #28a745; }
+.motivation.good { color: #17a2b8; }
+.motivation.ok { color: #ffc107; }
+.motivation.encouragement { color: #6c757d; }
+
+
+/* 小型删除按钮 (用于目标列表) */
+.delete-button-small {
+    background: none;
+    border: none;
+    color: #d9534f;
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 0 5px;
+    vertical-align: middle; /* 垂直居中 */
+}
+.delete-button-small:hover {
+    color: #c9302c;
+}
+.goal-list-small {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
+}
+.goal-list-small li {
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+/* 操作按钮美化 */
+.action-buttons button, .action-buttons a {
+    padding: 5px 8px; /* 减小按钮大小 */
+    font-size: 1em; /* 图标大小 */
+    margin: 0 2px; /* 按钮间距 */
+    vertical-align: middle;
+}
+.edit-button {
+     background-color: #f0ad4e;
+     color: white;
+     border: none;
+     border-radius: 4px;
+     text-decoration: none; /* 去除a标签下划线 */
+     display: inline-block; /* 让a标签像按钮一样显示 */
+     line-height: normal; /* 确保图标垂直居中 */
+}
+.edit-button:hover {
+    background-color: #ec971f;
+}
+.delete-button {
+     background-color: #d9534f;
+     border: none; /* 保持一致性 */
+     padding: 5px 8px;
+     vertical-align: middle;
+}
+
+/* 响应式调整 */
+@media (max-width: 992px) {
+     .forms-container, .data-section {
+         flex-direction: column; /* 在中等屏幕上开始垂直排列 */
+     }
+     .form-section, .list-section {
+        min-width: 90%; /* 让它们占据更多宽度 */
+    }
+}
+@media (max-width: 768px) {
+    .list-header {
+        flex-direction: column; /* 头部元素垂直排列 */
+        align-items: flex-start; /* 左对齐 */
+    }
+    .filters {
+        width: 100%; /* 过滤器占满宽度 */
+        margin-top: 15px;
+    }
+     .filters label { margin-left: 0; margin-right: 5px; } /* 调整标签间距 */
+     .filters select { margin-bottom: 5px; } /* 下拉框之间加点间距 */
+}

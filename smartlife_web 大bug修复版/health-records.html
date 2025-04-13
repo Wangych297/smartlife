@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartLife - 健康数据记录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .health-card {
+            transition: all 0.3s ease;
+        }
+        .health-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .data-row:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .data-row:hover {
+            background-color: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- 顶部导航栏 -->
+        <header class="bg-indigo-600 text-white shadow-md">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-heartbeat text-2xl"></i>
+                    <h1 class="text-2xl font-bold">SmartLife</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-1 bg-indigo-500 px-3 py-1 rounded-full">
+                        <i class="fas fa-coins text-yellow-300"></i>
+                        <span id="points-counter" class="font-medium">0</span>
+                    </div>
+                    <button id="back-btn" class="p-2 rounded-full hover:bg-indigo-500">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button id="logout-btn" class="p-2 rounded-full hover:bg-indigo-500">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="flex-1 container mx-auto px-4 py-6">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">健康数据记录</h1>
+                <p class="text-gray-600">查看您的健康数据历史记录和趋势分析</p>
+            </div>
+
+            <!-- 筛选选项 -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6 fade-in">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div>
+                        <label for="period-filter" class="block text-sm font-medium text-gray-700 mb-1">时间范围</label>
+                        <select id="period-filter" class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="all">全部</option>
+                            <option value="week">最近一周</option>
+                            <option value="month">最近一个月</option>
+                            <option value="year">最近一年</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="date-from" class="block text-sm font-medium text-gray-700 mb-1">开始日期</label>
+                        <input type="date" id="date-from" class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="date-to" class="block text-sm font-medium text-gray-700 mb-1">结束日期</label>
+                        <input type="date" id="date-to" class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div class="self-end">
+                        <button id="filter-btn" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-200">
+                            <i class="fas fa-filter mr-2"></i>筛选
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据可视化 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6 fade-in">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">步数趋势</h2>
+                    <div class="h-64">
+                        <canvas id="steps-chart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 fade-in">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">睡眠时长趋势</h2>
+                    <div class="h-64">
+                        <canvas id="sleep-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6 fade-in">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">饮水量趋势</h2>
+                    <div class="h-64">
+                        <canvas id="water-chart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 fade-in">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">健康数据统计</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-blue-700">平均步数</p>
+                            <p id="avg-steps" class="text-2xl font-bold text-blue-800">0</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <p class="text-sm text-purple-700">平均睡眠时长</p>
+                            <p id="avg-sleep" class="text-2xl font-bold text-purple-800">0 小时</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-green-700">平均饮水量</p>
+                            <p id="avg-water" class="text-2xl font-bold text-green-800">0 ml</p>
+                        </div>
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <p class="text-sm text-yellow-700">记录天数</p>
+                            <p id="days-recorded" class="text-2xl font-bold text-yellow-800">0 天</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden fade-in">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">健康数据记录</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">步数</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">睡眠时长 (小时)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">饮水量 (ml)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">记录时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="health-data-table" class="bg-white divide-y divide-gray-200">
+                            <!-- 数据将通过JavaScript动态加载 -->
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="pagination" class="px-6 py-4 flex justify-between items-center border-t border-gray-200">
+                    <div>
+                        <span id="page-info" class="text-sm text-gray-700">显示 <span id="showing-from">0</span> 到 <span id="showing-to">0</span> 条，共 <span id="total-records">0</span> 条记录</span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="prev-page" class="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50">上一页</button>
+                        <button id="next-page" class="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部信息 -->
+        <footer class="bg-gray-100 border-t border-gray-200 py-4">
+            <div class="container mx-auto px-4 text-center text-gray-600 text-sm">
+                <p>© 2025 SmartLife - 23336233 智能健康管理与任务追踪系统. 保留所有权利.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('smartlife_token');
+        let healthData = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let stepsChart, sleepChart, waterChart;
+
+        // 页面加载时检查是否已登录
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+
+            // 验证令牌
+            fetch('/api/auth/verify', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    localStorage.removeItem('smartlife_token');
+                    window.location.href = '/';
+                    return;
+                }
+                
+                // 初始化页面
+                initializePage();
+            })
+            .catch(err => {
+                console.error('验证令牌失败:', err);
+                localStorage.removeItem('smartlife_token');
+                window.location.href = '/';
+            });
+        });
+
+        // 初始化页面
+        function initializePage() {
+            // 设置事件监听器
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            document.getElementById('back-btn').addEventListener('click', () => {
+                window.location.href = '/smartlife.html';
+            });
+            document.getElementById('filter-btn').addEventListener('click', applyFilters);
+            document.getElementById('period-filter').addEventListener('change', handlePeriodChange);
+            document.getElementById('prev-page').addEventListener('click', () => changePage(-1));
+            document.getElementById('next-page').addEventListener('click', () => changePage(1));
+            
+            // 设置默认日期
+            const today = new Date();
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(today.getMonth() - 1);
+            
+            document.getElementById('date-to').value = formatDate(today);
+            document.getElementById('date-from').value = formatDate(oneMonthAgo);
+            
+            // 加载数据
+            fetchUserPoints();
+            fetchHealthData();
+            fetchHealthStats();
+        }
+
+        // 获取用户积分
+        async function fetchUserPoints() {
+            try {
+                const response = await fetch('/api/user/points', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('points-counter').textContent = data.points;
+                }
+            } catch (err) {
+                console.error('获取用户积分失败:', err);
+            }
+        }
+
+        // 获取健康数据
+        async function fetchHealthData() {
+            try {
+                const periodFilter = document.getElementById('period-filter').value;
+                let url = '/api/health';
+                
+                if (periodFilter !== 'all') {
+                    url += `?period=${periodFilter}`;
+                }
+                
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    healthData = await response.json();
+                    
+                    // 按日期排序（从新到旧）
+                    healthData.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    // 更新表格和图表
+                    updateTable();
+                    updateCharts();
+                }
+            } catch (err) {
+                console.error('获取健康数据失败:', err);
+            }
+        }
+
+        // 获取健康数据统计
+        async function fetchHealthStats() {
+            try {
+                const response = await fetch('/api/health/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // 更新统计数据
+                    document.getElementById('avg-steps').textContent = Math.round(data.totalStats.totalSteps / data.totalStats.daysRecorded) || 0;
+                    document.getElementById('avg-sleep').textContent = (data.totalStats.avgSleep || 0).toFixed(1) + ' 小时';
+                    document.getElementById('avg-water').textContent = Math.round(data.totalStats.totalWater / data.totalStats.daysRecorded) || 0 + ' ml';
+                    document.getElementById('days-recorded').textContent = data.totalStats.daysRecorded + ' 天';
+                }
+            } catch (err) {
+                console.error('获取健康数据统计失败:', err);
+            }
+        }
+
+        // 更新表格
+        function updateTable() {
+            const tableBody = document.getElementById('health-data-table');
+            const totalRecords = healthData.length;
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, totalRecords);
+            
+            // 更新分页信息
+            document.getElementById('showing-from').textContent = totalRecords > 0 ? startIndex + 1 : 0;
+            document.getElementById('showing-to').textContent = endIndex;
+            document.getElementById('total-records').textContent = totalRecords;
+            
+            // 禁用/启用分页按钮
+            document.getElementById('prev-page').disabled = currentPage === 1;
+            document.getElementById('next-page').disabled = endIndex >= totalRecords;
+            
+            // 清空表格
+            tableBody.innerHTML = '';
+            
+            // 如果没有数据
+            if (totalRecords === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-gray-500">暂无数据</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+            
+            // 添加数据行
+            for (let i = startIndex; i < endIndex; i++) {
+                const item = healthData[i];
+                const row = document.createElement('tr');
+                row.className = 'data-row';
+                
+                const date = new Date(item.date);
+                const formattedDate = date.toLocaleDateString('zh-CN');
+                
+                const createdAt = new Date(item.createdAt);
+                const formattedCreatedAt = createdAt.toLocaleString('zh-CN');
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${formattedDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${item.steps}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${item.sleep}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${item.water}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formattedCreatedAt}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            }
+        }
+
+        // 更新图表
+        function updateCharts() {
+            // 准备图表数据
+            const dates = [];
+            const stepsData = [];
+            const sleepData = [];
+            const waterData = [];
+            
+            // 最多显示最近30条记录
+            const displayData = healthData.slice(0, 30).reverse();
+            
+            displayData.forEach(item => {
+                const date = new Date(item.date);
+                const formattedDate = `${date.getMonth() + 1}/${date.getDate()}`;
+                
+                dates.push(formattedDate);
+                stepsData.push(item.steps);
+                sleepData.push(item.sleep);
+                waterData.push(item.water);
+            });
+            
+            // 销毁旧图表
+            if (stepsChart) stepsChart.destroy();
+            if (sleepChart) sleepChart.destroy();
+            if (waterChart) waterChart.destroy();
+            
+            // 创建步数图表
+            const stepsCtx = document.getElementById('steps-chart').getContext('2d');
+            stepsChart = new Chart(stepsCtx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: '步数',
+                        data: stepsData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // 创建睡眠图表
+            const sleepCtx = document.getElementById('sleep-chart').getContext('2d');
+            sleepChart = new Chart(sleepCtx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: '睡眠时长 (小时)',
+                        data: sleepData,
+                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // 创建饮水量图表
+            const waterCtx = document.getElementById('water-chart').getContext('2d');
+            waterChart = new Chart(waterCtx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: '饮水量 (ml)',
+                        data: waterData,
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            fetchHealthData();
+        }
+
+        // 处理时间段变化
+        function handlePeriodChange() {
+            const periodFilter = document.getElementById('period-filter').value;
+            const dateFromInput = document.getElementById('date-from');
+            const dateToInput = document.getElementById('date-to');
+            
+            const today = new Date();
+            
+            if (periodFilter === 'week') {
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(today.getDate() - 7);
+                dateFromInput.value = formatDate(oneWeekAgo);
+                dateToInput.value = formatDate(today);
+            } else if (periodFilter === 'month') {
+                const oneMonthAgo = new Date();
+                oneMonthAgo.setMonth(today.getMonth() - 1);
+                dateFromInput.value = formatDate(oneMonthAgo);
+                dateToInput.value = formatDate(today);
+            } else if (periodFilter === 'year') {
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(today.getFullYear() - 1);
+                dateFromInput.value = formatDate(oneYearAgo);
+                dateToInput.value = formatDate(today);
+            }
+            
+            fetchHealthData();
+        }
+
+        // 切换页面
+        function changePage(direction) {
+            currentPage += direction;
+            updateTable();
+        }
+
+        // 格式化日期为YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('smartlife_token');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑任务 - SmartLife</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* 为编辑页面添加特定样式 */
+        .edit-task-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .edit-task-container h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="date"],
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* 防止 padding 影响总宽度 */
+        }
+        .button-group {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .button-group button,
+        .button-group a {
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .button-group button[type="submit"] {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+        }
+        .button-group button[type="submit"]:hover {
+            background-color: #4cae4c;
+        }
+        .button-group a {
+            background-color: #aaa;
+            color: white;
+            border: none;
+            display: inline-block; /* 让 a 标签表现得像按钮 */
+        }
+         .button-group a:hover {
+             background-color: #888;
+         }
+    </style>
+</head>
+<body>
+    <div class="edit-task-container">
+        <h1>编辑任务</h1>
+
+        <!-- 显示 Flash 消息 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class=flashes>
+            {% for category, message in messages %}
+              <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+
+
+        <form action="{{ url_for('update_task_details', task_id=task.id) }}" method="post">
+            <div class="form-group">
+                <label for="task_description">任务描述:</label>
+                <input type="text" id="task_description" name="task_description" value="{{ task.description }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="task_priority">优先级:</label>
+                <select id="task_priority" name="task_priority">
+                    <option value="高" {% if task.priority == '高' %}selected{% endif %}>高</option>
+                    <option value="中" {% if task.priority == '中' %}selected{% endif %}>中</option>
+                    <option value="低" {% if task.priority == '低' %}selected{% endif %}>低</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="task_due_date">截止日期:</label>
+                <input type="date" id="task_due_date" name="task_due_date" value="{{ task.due_date if task.due_date != '无' else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="task_group">分组 (可选):</label>
+                <input type="text" id="task_group" name="task_group" value="{{ task.group or '' }}" placeholder="例如: 工作, 学习">
+            </div>
+
+            <div class="form-group">
+                <label for="task_tags">标签 (可选, 逗号分隔):</label>
+                <input type="text" id="task_tags" name="task_tags" value="{{ task.tags_str or '' }}" placeholder="例如: 重要, 紧急, 购物">
+            </div>
+
+            <div class="button-group">
+                <a href="{{ url_for('index') }}">取消</a>
+                <button type="submit">保存更改</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

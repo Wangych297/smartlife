@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "username": "user",
+    "password": "password",
+    "points": 205
+  },
+  {
+    "id": 2,
+    "username": "Wangych",
+    "password": "password",
+    "points": 170
+  },
+  {
+    "id": 3,
+    "username": "Wangych1",
+    "password": "password",
+    "points": 50
+  },
+  {
+    "id": 4,
+    "username": "Wangych3",
+    "password": "password",
+    "points": 50
+  },
+  {
+    "id": 5,
+    "username": "Wangych4",
+    "password": "password",
+    "points": 50
+  },
+  {
+    "id": 6,
+    "username": "Wangych5",
+    "password": "123456",
+    "points": 62
+  },
+  {
+    "id": 7,
+    "username": "Wangych6",
+    "password": "123456",
+    "points": 105
+  },
+  {
+    "id": 8,
+    "username": "Wangych7",
+    "password": "123456",
+    "points": 50
+  }
+]

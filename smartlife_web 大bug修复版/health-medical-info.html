@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartLife - 健康与医疗数据</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .health-card {
+            transition: all 0.3s ease;
+        }
+        .health-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- 顶部导航栏 -->
+        <header class="bg-indigo-600 text-white shadow-md">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-heartbeat text-2xl"></i>
+                    <h1 class="text-2xl font-bold">SmartLife</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-1 bg-indigo-500 px-3 py-1 rounded-full">
+                        <i class="fas fa-coins text-yellow-300"></i>
+                        <span id="points-counter" class="font-medium">0</span>
+                    </div>
+                    <button id="back-btn" class="p-2 rounded-full hover:bg-indigo-500">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button id="logout-btn" class="p-2 rounded-full hover:bg-indigo-500">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="flex-1 container mx-auto px-4 py-6">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">健康与医疗数据</h1>
+                <p class="text-gray-600">记录和管理您的健康与医疗信息，帮助您更好地了解自己的健康状况</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- 健康数据表单 -->
+                <div class="bg-white rounded-lg shadow-md p-6 fade-in">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-heartbeat text-indigo-500 mr-2"></i> 健康数据
+                    </h2>
+                    <form id="health-data-form" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="height" class="block text-sm font-medium text-gray-700 mb-1">身高 (cm)</label>
+                                <input type="number" id="height" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="输入身高" step="0.1">
+                            </div>
+                            <div>
+                                <label for="weight" class="block text-sm font-medium text-gray-700 mb-1">体重 (kg)</label>
+                                <input type="number" id="weight" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="输入体重" step="0.1">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="blood-sugar" class="block text-sm font-medium text-gray-700 mb-1">血糖水平 (mmol/L)</label>
+                            <input type="number" id="blood-sugar" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="输入血糖水平" step="0.1">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">血压 (mmHg)</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <input type="number" id="systolic-pressure" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="收缩压">
+                                </div>
+                                <div>
+                                    <input type="number" id="diastolic-pressure" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="舒张压">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="heart-rate" class="block text-sm font-medium text-gray-700 mb-1">心率 (次/分钟)</label>
+                            <input type="number" id="heart-rate" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="输入心率">
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 医疗数据表单 -->
+                <div class="bg-white rounded-lg shadow-md p-6 fade-in">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-notes-medical text-indigo-500 mr-2"></i> 医疗数据
+                    </h2>
+                    <form id="medical-data-form" class="space-y-4">
+                        <div>
+                            <label for="medical-history" class="block text-sm font-medium text-gray-700 mb-1">个人病史</label>
+                            <textarea id="medical-history" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="描述您的个人病史，包括慢性疾病、手术经历等"></textarea>
+                        </div>
+
+                        <div>
+                            <label for="medication-history" class="block text-sm font-medium text-gray-700 mb-1">药物史</label>
+                            <textarea id="medication-history" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="描述您正在服用或曾经服用的药物"></textarea>
+                        </div>
+
+                        <div>
+                            <label for="allergies" class="block text-sm font-medium text-gray-700 mb-1">过敏史</label>
+                            <textarea id="allergies" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="描述您的过敏情况，包括药物过敏、食物过敏等"></textarea>
+                        </div>
+
+                        <div>
+                            <label for="blood-type" class="block text-sm font-medium text-gray-700 mb-1">血型</label>
+                            <select id="blood-type" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">请选择血型</option>
+                                <option value="A">A型</option>
+                                <option value="B">B型</option>
+                                <option value="AB">AB型</option>
+                                <option value="O">O型</option>
+                                <option value="unknown">未知</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 保存按钮 -->
+            <div class="mt-8 text-center">
+                <button id="save-btn" class="bg-indigo-600 text-white py-3 px-8 rounded-md hover:bg-indigo-700 transition duration-200 text-lg font-medium">
+                    <i class="fas fa-save mr-2"></i> 保存健康与医疗数据
+                </button>
+                <p id="last-updated" class="text-gray-500 mt-2 text-sm"></p>
+            </div>
+
+            <!-- 健康指标说明 -->
+            <div class="mt-12 bg-white rounded-lg shadow-md p-6 fade-in">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">健康指标参考值</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="health-card bg-blue-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-blue-700 mb-2">血压 (mmHg)</h3>
+                        <ul class="text-sm space-y-1 text-gray-700">
+                            <li>理想: 90-119 / 60-79</li>
+                            <li>正常: 120-129 / 80-84</li>
+                            <li>正常偏高: 130-139 / 85-89</li>
+                            <li>高血压: ≥140 / ≥90</li>
+                        </ul>
+                    </div>
+                    <div class="health-card bg-green-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-green-700 mb-2">血糖 (mmol/L)</h3>
+                        <ul class="text-sm space-y-1 text-gray-700">
+                            <li>空腹: 3.9-6.1</li>
+                            <li>餐后2小时: <7.8</li>
+                            <li>糖尿病前期: 6.1-7.0</li>
+                            <li>糖尿病: ≥7.0</li>
+                        </ul>
+                    </div>
+                    <div class="health-card bg-purple-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-purple-700 mb-2">心率 (次/分钟)</h3>
+                        <ul class="text-sm space-y-1 text-gray-700">
+                            <li>运动员: 40-60</li>
+                            <li>正常成人: 60-100</li>
+                            <li>儿童: 70-120</li>
+                            <li>婴儿: 80-160</li>
+                        </ul>
+                    </div>
+                    <div class="health-card bg-yellow-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-yellow-700 mb-2">体重指数 (BMI)</h3>
+                        <ul class="text-sm space-y-1 text-gray-700">
+                            <li>偏瘦: <18.5</li>
+                            <li>正常: 18.5-24.9</li>
+                            <li>超重: 25-29.9</li>
+                            <li>肥胖: ≥30</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部信息 -->
+        <footer class="bg-gray-100 border-t border-gray-200 py-4">
+            <div class="container mx-auto px-4 text-center text-gray-600 text-sm">
+                <p>© 2025 SmartLife - 23336233 智能健康管理与任务追踪系统. 保留所有权利.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('smartlife_token');
+
+        // 页面加载时检查是否已登录
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+
+            // 验证令牌
+            fetch('/api/auth/verify', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    localStorage.removeItem('smartlife_token');
+                    window.location.href = '/';
+                    return;
+                }
+                
+                // 初始化页面
+                initializePage();
+            })
+            .catch(err => {
+                console.error('验证令牌失败:', err);
+                localStorage.removeItem('smartlife_token');
+                window.location.href = '/';
+            });
+        });
+
+        // 初始化页面
+        function initializePage() {
+            // 设置事件监听器
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            document.getElementById('back-btn').addEventListener('click', () => {
+                window.location.href = '/smartlife.html';
+            });
+            document.getElementById('save-btn').addEventListener('click', saveHealthMedicalData);
+            
+            // 加载数据
+            fetchUserPoints();
+            fetchHealthMedicalData();
+        }
+
+        // 获取用户积分
+        async function fetchUserPoints() {
+            try {
+                const response = await fetch('/api/user/points', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('points-counter').textContent = data.points;
+                }
+            } catch (err) {
+                console.error('获取用户积分失败:', err);
+            }
+        }
+
+        // 获取健康与医疗数据
+        async function fetchHealthMedicalData() {
+            try {
+                const response = await fetch('/api/health-medical-info', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data) {
+                        // 填充表单数据
+                        document.getElementById('height').value = data.height || '';
+                        document.getElementById('weight').value = data.weight || '';
+                        document.getElementById('blood-sugar').value = data.bloodSugar || '';
+                        document.getElementById('systolic-pressure').value = data.systolicPressure || '';
+                        document.getElementById('diastolic-pressure').value = data.diastolicPressure || '';
+                        document.getElementById('heart-rate').value = data.heartRate || '';
+                        document.getElementById('medical-history').value = data.medicalHistory || '';
+                        document.getElementById('medication-history').value = data.medicationHistory || '';
+                        document.getElementById('allergies').value = data.allergies || '';
+                        document.getElementById('blood-type').value = data.bloodType || '';
+                        
+                        // 显示最后更新时间
+                        if (data.updatedAt) {
+                            const date = new Date(data.updatedAt);
+                            document.getElementById('last-updated').textContent = `上次更新: ${date.toLocaleString()}`;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('获取健康与医疗数据失败:', err);
+            }
+        }
+
+        // 保存健康与医疗数据
+        async function saveHealthMedicalData() {
+            try {
+                const healthData = {
+                    height: parseFloat(document.getElementById('height').value) || null,
+                    weight: parseFloat(document.getElementById('weight').value) || null,
+                    bloodSugar: parseFloat(document.getElementById('blood-sugar').value) || null,
+                    systolicPressure: parseInt(document.getElementById('systolic-pressure').value) || null,
+                    diastolicPressure: parseInt(document.getElementById('diastolic-pressure').value) || null,
+                    heartRate: parseInt(document.getElementById('heart-rate').value) || null,
+                    medicalHistory: document.getElementById('medical-history').value,
+                    medicationHistory: document.getElementById('medication-history').value,
+                    allergies: document.getElementById('allergies').value,
+                    bloodType: document.getElementById('blood-type').value
+                };
+                
+                const response = await fetch('/api/health-medical-info', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify(healthData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // 更新最后更新时间
+                    const date = new Date(data.updatedAt);
+                    document.getElementById('last-updated').textContent = `上次更新: ${date.toLocaleString()}`;
+                    
+                    // 显示成功消息
+                    alert('健康与医疗数据保存成功！');
+                    
+                    // 更新积分显示
+                    fetchUserPoints();
+                } else {
+                    alert('保存数据失败，请重试');
+                }
+            } catch (err) {
+                console.error('保存健康与医疗数据失败:', err);
+                alert('保存数据时出错，请重试');
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('smartlife_token');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
